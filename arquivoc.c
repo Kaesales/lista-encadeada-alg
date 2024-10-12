@@ -13,7 +13,7 @@ typedef struct nota {
 } Nota;
 
 typedef struct aluno {
-    int id;
+    char id[15];
     char nome[500];
     Nota *notas;
     struct aluno *prev; //ponteiro para o nó anterior
@@ -29,12 +29,13 @@ typedef struct {
 DoublyLinkedList* inicializar_lista();
 void imprimir_lista(DoublyLinkedList *list);
 void liberar_lista(DoublyLinkedList *lista);
-int verificar_id(DoublyLinkedList *list, int id);
-void inserir_aluno_no_final(DoublyLinkedList *list, int id, const char *nome);
-void excluir_aluno(DoublyLinkedList *list, int id);
+int verificar_id(DoublyLinkedList *list, char *id);
+int verificar_quatidade_de_digitos(char *id);
+void inserir_aluno_no_final(DoublyLinkedList *list, char *id, const char *nome);
+void excluir_aluno(DoublyLinkedList *list, char *id);
 void inserir_nota(Aluno *aluno, float valor);
 void imprimir_notas(Aluno *aluno);
-void buscar_aluno_nota(DoublyLinkedList *list, int id);
+void buscar_aluno_nota(DoublyLinkedList *list, char *id);
 void excluir_nota(Aluno *aluno, int posicao);
 void alterar_nota(Aluno *aluno, int posicao, float valor);
 void liberar_notas(Nota *nota);
@@ -64,7 +65,7 @@ void imprimir_lista(DoublyLinkedList *list){
     }
 
     while (atual != NULL) {
-        printf("%d  %s\n", atual->id, atual->nome);
+        printf("%s  %s\n", atual->id, atual->nome);
         atual = atual->next;
     }
 }
@@ -80,18 +81,18 @@ void liberar_lista(DoublyLinkedList *lista){
     free(lista);
 }
 
-int verificar_id(DoublyLinkedList *list, int id) {
+int verificar_id(DoublyLinkedList *list, char *id) {
     Aluno *aluno = list->head;
     while (aluno != NULL) {
-        if (aluno->id == id) {
-            return 1;
-        }
+        if (strcmp(aluno->id, id) == 0) {
+        return 1;
+    }
         aluno = aluno->next; 
     }
     return 0; 
 }
 
-void inserir_aluno_no_final(DoublyLinkedList *list, int id, const char *nome) {
+void inserir_aluno_no_final(DoublyLinkedList *list, char *id, const char *nome) {
     if (verificar_id(list, id)) {
         fprintf(stderr, "⚠ Erro: ID já cadastrado");
         return;
@@ -105,7 +106,7 @@ void inserir_aluno_no_final(DoublyLinkedList *list, int id, const char *nome) {
     
 
     strcpy(novo_aluno->nome, nome);
-    novo_aluno->id = id;
+    strcpy(novo_aluno->id, id);
     novo_aluno->next = NULL;
     novo_aluno->notas = NULL;
     novo_aluno->prev = list->tail;
@@ -122,7 +123,7 @@ void inserir_aluno_no_final(DoublyLinkedList *list, int id, const char *nome) {
 }
 
 
-void excluir_aluno(DoublyLinkedList *list, int id) {
+void excluir_aluno(DoublyLinkedList *list, char *id) {
     Aluno *temp = list->head;
     while (temp != NULL) {
         if (temp->id == id) {
@@ -274,7 +275,7 @@ void excluir_nota(Aluno *aluno, int posicao) {
     printf("Posição %d inválida. Não há notas nessa posição.\n", posicao);
 }
 
-void buscar_aluno_nota(DoublyLinkedList *list, int id) {
+void buscar_aluno_nota(DoublyLinkedList *list, char *id) {
     Aluno *aluno = list->head;
     int opcao;
     float valor;
@@ -372,6 +373,7 @@ void pausar_para_mensagem(const char* mensagem) {
 }
 
 int exibir_menu() {
+    limpar_terminal();
     int opcao;
     printf("SISTEMA DE NOTAS DE ALUNOS\n");
     printf("1. Cadastrar aluno\n");
@@ -388,7 +390,7 @@ int exibir_menu() {
 int main() {
     DoublyLinkedList *lista = inicializar_lista();
     int opcao;
-    int aid;
+    char id[15];
     char name[500];
 
     do {
@@ -399,12 +401,21 @@ int main() {
             case 1:
                 limpar_terminal();
                 printf("CADASTRO DE ALUNOS\nID: ");
-                scanf("%d", &aid);
+                scanf("%18s", id);
                 while(getchar() != '\n');
+                
+                if(verificar_quatidade_de_digitos(id)){
+                 fprintf(stderr, ": O id inserido possui mais ou menos de 14 dígitos.\n");
+                 sleep(1.5);
+                 printf("Retornando ao menu...");
+                 sleep(3.5);
+                 break;
+                 }
+ 
                 printf("Nome do aluno: ");
                 fgets(name, sizeof(name), stdin);
                 name[strcspn(name, "\n")] = '\0'; 
-                inserir_aluno_no_final(lista, aid, name);
+                inserir_aluno_no_final(lista, id, name);
                 pausar_para_mensagem("");
                 break;
 
@@ -416,16 +427,16 @@ int main() {
 
             case 3:
                 printf("Insira o ID do aluno que quer excluir: ");
-                scanf("%d", &aid);
-                excluir_aluno(lista, aid);
+                scanf("%s", id);
+                excluir_aluno(lista, id);
                 pausar_para_mensagem("");
                 break;
 
             case 4:
                 limpar_terminal();
                 printf("Insira o id do aluno: ");
-                scanf("%d", &aid);
-                buscar_aluno_nota(lista, aid);
+                scanf("%s", id);
+                buscar_aluno_nota(lista, id);
                 limpar_terminal();
                 break;
 
@@ -445,3 +456,12 @@ int main() {
 }
 
 
+int verificar_quatidade_de_digitos(char *id){
+int digitos = strlen(id);
+
+if(digitos>14 || digitos<14){
+printf("erro");
+return 1;
+}
+return 0;
+}
