@@ -42,7 +42,11 @@ void liberar_notas(Nota *nota);
 void limpar_terminal();
 void pausar_para_mensagem(const char* mensagem);
 void exibir_menu_nota(Aluno *aluno);
-int exibir_menu();
+void dividir_lista(Aluno* head, Aluno** front, Aluno** back);
+Aluno* merge_listas(Aluno *front, Aluno *back);
+Aluno *merge_sort(Aluno *head);
+void ordenar_alunos(DoublyLinkedList *list);
+
 
 // Funções implementadas
 DoublyLinkedList* inicializar_lista(){
@@ -58,12 +62,13 @@ return lista;
 }
 
 void imprimir_lista(DoublyLinkedList *list){
+    ordenar_alunos(list);
     Aluno *atual = list->head;
     if (atual == NULL) {
         printf("A lista está vazia.\n");
         return;
     }
-
+    
     while (atual != NULL) {
         printf("%s  %s\n", atual->id, atual->nome);
         atual = atual->next;
@@ -91,6 +96,17 @@ int verificar_id(DoublyLinkedList *list, char *id) {
     }
     return 0; 
 }
+
+int verificar_quatidade_de_digitos(char *id){
+int digitos = strlen(id);
+
+if(digitos>14 || digitos<14){
+printf("erro");
+return 1;
+}
+return 0;
+}
+
 
 void inserir_aluno_no_final(DoublyLinkedList *list, char *id, const char *nome) {
     if (verificar_id(list, id)) {
@@ -212,15 +228,17 @@ void imprimir_notas(Aluno *aluno) {
         printf("Sem notas publicadas.\n");
         return;
     }
+    
 
+    printf("\n---NOTAS---\n");
     while (nota_atual != NULL) {
-        printf("%.2f ", nota_atual->nota);
-        soma += nota_atual->nota;
         count++;
+        printf("Nota %d - %.2f\n", count, nota_atual->nota);
+        soma += nota_atual->nota;
         nota_atual = nota_atual->next;
     }
 
-    if (count > 0) {
+    if (count==MAX_NOTAS) {
         printf("\nMédia: %.2f\n", soma / count);
     }
 }
@@ -280,10 +298,10 @@ void buscar_aluno_nota(DoublyLinkedList *list, char *id) {
     int opcao;
     float valor;
 
-    while (aluno != NULL) {
-        if (aluno->id == id) {
+    while (aluno != NULL){
+        if (strcmp(aluno->id, id) == 0) {
             do {
-                printf("Aluno: %s\n", aluno->nome);
+                printf("\nAluno: %s\n", aluno->nome);
                 printf("1. Inserir nota\n");
                 printf("2. Visualizar notas\n");
                 printf("3. Voltar ao menu\n");
@@ -387,6 +405,99 @@ int exibir_menu() {
     return opcao;
 }
 
+// Função auxiliar para dividir a lista em duas sublistas
+void dividir_lista(Aluno* head, Aluno** front, Aluno** back){
+    Aluno* slow;
+    Aluno* fast;
+    slow = head;
+    fast = head->next;
+
+    // Avança o ponteiro fast 2 nós e o slow 1 nó
+    while (fast != NULL) {
+        fast = fast->next;
+        if (fast != NULL) {
+            slow = slow->next;
+            fast = fast->next;
+        }
+    }
+
+    // Dividindo a lista em duas partes
+    *front = head;
+    *back = slow->next;
+    slow->next = NULL; // Finaliza a primeira metade
+    if (*back != NULL) {
+        (*back)->prev = NULL; // Previne referências circulares
+    }
+}
+
+
+
+
+// Função auxiliar para unir duas listas ordenadas
+Aluno* merge_listas(Aluno* front, Aluno* back) {
+    // Caso base: Se uma das listas está vazia, retorna a outra
+    if (front == NULL) {
+        return back;
+    } else if (back == NULL) {
+        return front;
+    }
+
+    Aluno* resultado = NULL;
+
+    // Comparando os nomes dos alunos para ordenar alfabeticamente
+    if (strcmp(front->nome, back->nome) <= 0) {
+        resultado = front;
+        resultado->next = merge_listas(front->next, back);
+        if (resultado->next != NULL) {
+            resultado->next->prev = resultado;
+        }
+    } else {
+        resultado = back;
+        resultado->next = merge_listas(front, back->next);
+        if (resultado->next != NULL) {
+            resultado->next->prev = resultado;
+        }
+    }
+
+    return resultado;
+}
+
+// Função principal do Merge Sort
+Aluno* merge_sort(Aluno* head) {
+    // Caso base: Se a lista está vazia ou contém apenas 1 elemento
+    if (head == NULL || head->next == NULL) {
+        return head;
+    }
+
+    Aluno* front;
+    Aluno* back;
+
+    // Dividindo a lista em duas sublistas
+    dividir_lista(head, &front, &back);
+
+    // Chamando recursivamente o merge_sort nas duas metades
+    front = merge_sort(front);
+    back = merge_sort(back);
+
+    // Unindo as duas metades ordenadas
+    return merge_listas(front, back);
+}
+
+void ordenar_alunos(DoublyLinkedList *list) {
+    if (list->head != NULL) {
+        list->head = merge_sort(list->head);
+
+        // Atualizando a referência da tail (cauda)
+        Aluno *temp = list->head;
+        while (temp->next != NULL) {
+            temp = temp->next;
+        }
+        list->tail = temp;
+    }
+}
+
+
+
 int main() {
     DoublyLinkedList *lista = inicializar_lista();
     int opcao;
@@ -453,15 +564,4 @@ int main() {
 
     liberar_lista(lista);
     return 0;
-}
-
-
-int verificar_quatidade_de_digitos(char *id){
-int digitos = strlen(id);
-
-if(digitos>14 || digitos<14){
-printf("erro");
-return 1;
-}
-return 0;
 }
