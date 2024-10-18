@@ -407,7 +407,7 @@ int exibir_menu() {
 
 // Função auxiliar para dividir a lista em duas sublistas
 void dividir_lista(Aluno* head, Aluno** front, Aluno** back){
-    Aluno* slow;
+    Aluno* slow; //ponteiro que vai apontar para o nó médio da lista
     Aluno* fast;
     slow = head;
     fast = head->next;
@@ -422,11 +422,11 @@ void dividir_lista(Aluno* head, Aluno** front, Aluno** back){
     }
 
     // Dividindo a lista em duas partes
-    *front = head;
-    *back = slow->next;
+    *front = head; // a primeira lista terá como cabeça, a cabeça da lista original
+    *back = slow->next; // a segunda lista terá como cabeça o nó que vem depois de slow(que é o ultimo nó da primeira lista e o ponto médio da lista principal)
     slow->next = NULL; // Finaliza a primeira metade
     if (*back != NULL) {
-        (*back)->prev = NULL; // Previne referências circulares
+        (*back)->prev = NULL; // separa a segunda lista da primeira lista e ajusta o ponteiro prev para apontar para NULL
     }
 }
 
